@@ -37,7 +37,6 @@ func NewBlockMaker(txpool txpool.TxPool, state statdb.StatDB, exec statemachine.
 		exec:   exec,
 	}
 }
-
 func (maker BlockMaker) NewBlock() {
 	maker.nextBody = blockchain.NewBlock()
 	maker.nextHeader = blockchain.NewHeader(maker.chain.CurrentHeader)

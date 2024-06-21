@@ -32,7 +32,7 @@ type BlockProducer struct {
 }
 
 func (producer BlockProducer) NewBlock() {
-	producer.header = blockchain.NewHeader(producer.chain.Current)
+	producer.header = blockchain.NewHeader(producer.chain.CurrentHeader)
 	// new Body
 	// producer.statdb =
 }
@@ -48,7 +48,7 @@ func (producer BlockProducer) pack() {
 		// TODO 数量
 		default:
 			tx := producer.txpool.Pop()
-			producer.m.Execute(producer.statdb, *tx)
+			producer.m.Execute1(producer.statdb, *tx)
 
 		}
 	}

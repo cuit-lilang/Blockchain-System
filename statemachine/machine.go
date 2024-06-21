@@ -9,7 +9,7 @@ import (
 )
 
 type IMachine interface {
-	Execute(state trie.ITrie, tx types.Transaction)
+	Execute(state trie.ITrie, text types.Transaction)
 	Execute1(state statdb.StatDB, tx types.Transaction1) *types.Receiption
 }
 

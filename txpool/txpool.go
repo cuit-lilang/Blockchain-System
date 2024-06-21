@@ -7,7 +7,7 @@ import (
 
 type TxPool interface {
 	SetStatRoot(root hash.Hash)
-	NewTx(tx *types.Transaction)
-	Pop() *types.Transaction
-	NotifyTxEvent(txs []*types.Transaction)
+	NewTx(tx *types.Transaction1)
+	Pop() *types.Transaction1
+	NotifyTxEvent(txs []*types.Transaction1)
 }

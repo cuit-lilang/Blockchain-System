@@ -20,7 +20,7 @@ type Header struct {
 }
 
 type Body struct {
-	Transactions []types.Transaction
+	Transactions []types.Transaction1
 	Receiptions  []types.Receiption
 }
 
@@ -29,6 +29,7 @@ func (header Header) Hash() hash.Hash {
 	return sha3.Keccak256(data)
 }
 
+// new a header
 func NewHeader(parent Header) *Header {
 	return &Header{
 		Root:       parent.Root,
@@ -37,9 +38,10 @@ func NewHeader(parent Header) *Header {
 	}
 }
 
+// new a body
 func NewBlock() *Body {
 	return &Body{
-		Transactions: make([]types.Transaction, 0),
+		Transactions: make([]types.Transaction1, 0),
 		Receiptions:  make([]types.Receiption, 0),
 	}
 }

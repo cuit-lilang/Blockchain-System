@@ -7,6 +7,7 @@ import (
 	"cxchain223/txpool"
 	"cxchain223/types"
 	"cxchain223/utils/xtime"
+	"encoding/binary"
 	"time"
 )
 
@@ -30,6 +31,7 @@ type BlockMaker struct {
 	interupt chan bool
 }
 
+// NewBlockMaker init BlockMaker
 func NewBlockMaker(txpool txpool.TxPool, state statdb.StatDB, exec statemachine.StateMachine) *BlockMaker {
 	return &BlockMaker{
 		txpool: txpool,
@@ -37,6 +39,8 @@ func NewBlockMaker(txpool txpool.TxPool, state statdb.StatDB, exec statemachine.
 		exec:   exec,
 	}
 }
+
+// NewBlock  BlockMaker calls NewBlock to make a  complete block
 func (maker BlockMaker) NewBlock() {
 	maker.nextBody = blockchain.NewBlock()
 	maker.nextHeader = blockchain.NewHeader(maker.chain.CurrentHeader)
@@ -72,12 +76,14 @@ func (maker BlockMaker) Finalize() (*blockchain.Header, *blockchain.Body) {
 	maker.nextHeader.Timestamp = xtime.Now()
 	maker.nextHeader.Nonce = 0
 	// TODO
-	// for n := 0; ; n++ {
-	// 	maker.nextHeader.Nonce = 0
-	// 	if maker.nextHeader.Hash() {
-	// 		break
-	// 	}
-	// }
+	for n := uint64(0); ; n++ {
+		maker.nextHeader.Nonce = n
+		hash := maker.nextHeader.Hash()
+		_hash := binary.BigEndian.Uint64(hash[:8]) //hash.Hash transfer to uint64
+		if _hash < maker.config.Difficulty {
+			break
+		}
+	}
 
 	return maker.nextHeader, maker.nextBody
 }

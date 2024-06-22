@@ -33,8 +33,9 @@ type BlockProducer struct {
 
 func (producer BlockProducer) NewBlock() {
 	producer.header = blockchain.NewHeader(producer.chain.CurrentHeader)
-	// new Body
-	// producer.statdb =
+	producer.block = blockchain.NewBlock()
+	producer.header.Coinbase = producer.config.Coinbase //set coinbase address
+	producer.statdb.SetStatRoot(producer.header.Root)   //set root hash
 }
 
 func (producer BlockProducer) pack() {

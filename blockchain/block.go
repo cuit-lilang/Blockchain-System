@@ -29,7 +29,7 @@ func (header Header) Hash() hash.Hash {
 	return sha3.Keccak256(data)
 }
 
-// new a header
+// NewHeader new a header of block
 func NewHeader(parent Header) *Header {
 	return &Header{
 		Root:       parent.Root,
@@ -38,7 +38,7 @@ func NewHeader(parent Header) *Header {
 	}
 }
 
-// new a body
+// NewBlock new a body of block
 func NewBlock() *Body {
 	return &Body{
 		Transactions: make([]types.Transaction1, 0),

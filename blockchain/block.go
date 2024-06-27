@@ -7,8 +7,14 @@ import (
 	"cxchain223/types"
 	"cxchain223/utils/hash"
 	"cxchain223/utils/rlp"
+	"strconv"
+	"time"
 )
 
+type Block struct {
+	Header
+	Body
+}
 type Header struct {
 	Root       hash.Hash
 	ParentHash hash.Hash
@@ -19,8 +25,15 @@ type Header struct {
 	Nonce uint64
 }
 
+var EmptyHeader = Header{
+	Root:       sha3.Keccak256([]byte("block_")),
+	ParentHash: hash.EmptyHash,
+	Height:     0,
+	Timestamp:  uint64(time.Now().Unix()),
+}
+
 type Body struct {
-	Transactions []types.Transaction1
+	Transactions []types.Transaction
 	Receiptions  []types.Receiption
 }
 
@@ -29,25 +42,29 @@ func (header Header) Hash() hash.Hash {
 	return sha3.Keccak256(data)
 }
 
-// NewHeader new a header of block
-func NewHeader(parent Header) *Header {
+func NewHeader(parent *Header) *Header {
+	if parent.ParentHash == hash.EmptyHash {
+		return &EmptyHeader
+	}
+	i := int(parent.Height + 1)
+	str := "block_" + strconv.Itoa(i)
 	return &Header{
-		Root:       parent.Root,
+		Root:       sha3.Keccak256([]byte(str)),
 		ParentHash: parent.Hash(),
 		Height:     parent.Height + 1,
+		Timestamp:  uint64(time.Now().Unix()),
 	}
 }
 
-// NewBlock new a body of block
 func NewBlock() *Body {
 	return &Body{
-		Transactions: make([]types.Transaction1, 0),
+		Transactions: make([]types.Transaction, 0),
 		Receiptions:  make([]types.Receiption, 0),
 	}
 }
 
 type Blockchain struct {
-	CurrentHeader Header
+	CurrentHeader *Header
 	Statedb       trie.ITrie
 	Txpool        txpool.TxPool
 }

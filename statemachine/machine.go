@@ -62,6 +62,9 @@ func (m *StateMachine) Execute(state trie.ITrie, tx types.Transaction) {
 	state.Store(to[:], data)
 }
 func (m *StateMachine) Execute1(state statdb.StatDB, tx types.Transaction) *types.Receiption {
+	if !tx.Verify() {
+		return nil
+	}
 	data, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		panic(err)

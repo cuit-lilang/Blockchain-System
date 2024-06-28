@@ -1,52 +1,94 @@
 package types
 
 import (
-	"cxchain223/crypto/secp256k1"
-	"cxchain223/crypto/sha3"
-	"cxchain223/utils/hexutil"
-	"cxchain223/utils/rlp"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"cxchain223/utils/hash"
+	"encoding/pem"
 	"fmt"
-	"hash"
 	"math/big"
 )
 
 type Receiption struct {
-	TxHash  hash.Hash
-	Status  int
-	GasUsed uint64
+	TxHash hash.Hash
+	Status int
+	// GasUsed int
 	// Logs
 }
 
-type Transaction1 struct {
-	txdata1
+type Transaction struct {
+	txdata
 	signature
 }
 
-type txdata1 struct {
+type txdata struct {
 	To       Address
 	Nonce    uint64
 	Value    uint64
 	Gas      uint64
 	GasPrice uint64
 	Input    []byte
+	from     []byte
 }
 
 type signature struct {
 	R, S *big.Int
-	V    uint8
+	V    *big.Int
 }
 
-func (tx Transaction1) From() Address {
-	txdata := tx.txdata1
-	toSign, err := rlp.EncodeToBytes(txdata)
-	fmt.Println(hexutil.Encode(toSign), err)
-	msg := sha3.Keccak256(toSign)
-	sig := make([]byte, 65)
-	pubKey, err := secp256k1.RecoverPubkey(msg[:], sig)
-	if err != nil {
-		// TODO 返回一个空地址
-		return Address{0x0}
-		panic(err)
+func NewTx(from *Account, to Address, nonce uint64, value uint64, gas uint64, gasPrice uint64, input []byte) *Transaction {
+	pubkey, privkey := from.GetPubKeyFromAccount(), from.GetPrivKeyFromAccount()
+
+	d, _ := x509.MarshalPKIXPublicKey(pubkey)
+	block := &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: d,
 	}
-	return PubKeyToAddress(pubKey)
+	pub := pem.EncodeToMemory(block)
+	sum := sha256.Sum256(input)
+	sig, err := rsa.SignPKCS1v15(rand.Reader, privkey, crypto.SHA256, sum[:])
+	if err != nil {
+		fmt.Println("ERROR TO SIGN")
+		return nil
+	}
+	r := new(big.Int).SetBytes(sig[:128])
+	s := new(big.Int).SetBytes(sig[128:255])
+	v := new(big.Int).SetBytes([]byte{sig[255] + 27})
+	return &Transaction{
+		txdata{
+			to,
+			nonce,
+			value,
+			gas,
+			gasPrice,
+			input,
+			pub,
+		},
+		signature{
+			R: r,
+			S: s,
+			V: v,
+		},
+	}
+}
+
+func (tx Transaction) From() Address {
+	return PubKeyToAddress(tx.from)
+}
+func (tx Transaction) Verify() bool {
+	r, s, v := tx.R, tx.S, tx.V
+	d := v.Bytes()
+	bt := d[0] - 27
+	sig := append(r.Bytes(), s.Bytes()...)
+	sig = append(sig, bt)
+	sum := sha256.Sum256(tx.Input)
+	pub := ParsePubKey(tx.from)
+	err := rsa.VerifyPKCS1v15(pub, crypto.SHA256, sum[:], sig)
+	if err != nil {
+		return false
+	}
+	return true
 }

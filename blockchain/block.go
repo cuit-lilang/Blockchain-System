@@ -65,6 +65,6 @@ func NewBlock() *Body {
 
 type Blockchain struct {
 	CurrentHeader *Header
-	Statedb       trie.ITrie
+	Db            trie.ITrie
 	Txpool        txpool.TxPool
 }

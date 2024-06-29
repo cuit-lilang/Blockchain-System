@@ -19,6 +19,10 @@ type Receiption struct {
 	// Logs
 }
 
+func (r Receiption) ToString() string {
+	return string(string(r.TxHash[:]) + string(r.Status) + "\n")
+}
+
 type Transaction struct {
 	txdata
 	signature
@@ -32,6 +36,13 @@ type txdata struct {
 	GasPrice uint64
 	Input    []byte
 	from     []byte
+}
+
+func (t txdata) ToString() string {
+	return string("To:" + string(t.To[:]) + "\nNonce:" + string(t.Nonce) +
+		"\nValue:" + string(t.Value) + "\nGas:" + string(t.Gas) +
+		"\nGasPrice:" + string(t.GasPrice) + "\nInput:" + string(t.Input) +
+		"\nFrom:" + string(t.from) + "\n")
 }
 
 type signature struct {

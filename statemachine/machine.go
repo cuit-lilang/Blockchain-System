@@ -21,6 +21,9 @@ func NewStateMachine() StateMachine {
 	return StateMachine{}
 }
 func (m *StateMachine) Execute(state trie.ITrie, tx types.Transaction) {
+	if !tx.Verify() {
+		return
+	}
 	from := tx.From()
 	to := tx.To
 	value := tx.Value
@@ -78,10 +81,10 @@ func (m *StateMachine) Execute1(state statdb.StatDB, tx types.Transaction) *type
 	to := tx.To
 	value := tx.Value
 	gasUsed := tx.Gas
-	if tx.Gas < 21000 {
+	if tx.Gas < 2000 {
 		return &receipt
 	} else {
-		gasUsed = 21000
+		gasUsed = 2000
 	}
 	gasUsed = gasUsed * tx.GasPrice
 	cost := value + gasUsed

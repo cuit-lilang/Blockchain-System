@@ -6,7 +6,6 @@ import (
 	"cxchain223/statemachine"
 	"cxchain223/trie"
 	"cxchain223/txpool"
-	"cxchain223/types"
 	"cxchain223/utils/rlp"
 	"cxchain223/utils/xtime"
 	"encoding/binary"
@@ -14,24 +13,12 @@ import (
 	"time"
 )
 
-type ChainConfig struct {
-	Duration   time.Duration
-	Coinbase   types.Address
-	Difficulty uint64
-}
-
-var DefaultConfig = ChainConfig{
-	Difficulty: 10,
-	Duration:   time.Second,
-	Coinbase:   [20]byte{},
-}
-
 type BlockMaker struct {
 	txpool txpool.TxPool
 	state  statdb.StatDB
 	exec   statemachine.IMachine
 
-	config ChainConfig
+	config blockchain.ChainConfig
 	chain  *blockchain.Blockchain
 
 	nextHeader *blockchain.Header
@@ -41,13 +28,15 @@ type BlockMaker struct {
 	txDB     trie.ITrie
 }
 
-func NewBlockMaker(txpool *txpool.DefaultPool, state *statdb.IStatDB, exec *statemachine.StateMachine, chain *blockchain.Blockchain) *BlockMaker {
+func NewBlockMaker(txpool *txpool.DefaultPool, state *statdb.IStatDB, exec *statemachine.StateMachine, chain *blockchain.Blockchain, txdb trie.ITrie) *BlockMaker {
 	return &BlockMaker{
-		txpool: txpool,
-		state:  state,
-		exec:   exec,
-		chain:  chain,
-		config: DefaultConfig,
+		txpool:     txpool,
+		state:      state,
+		exec:       exec,
+		chain:      chain,
+		config:     blockchain.DefaultConfig,
+		txDB:       txdb,
+		nextHeader: &blockchain.EmptyHeader,
 	}
 }
 
@@ -104,11 +93,23 @@ func (maker *BlockMaker) Seal() {
 		if maker.txpool.Has() {
 			maker.pack()
 		} else {
+			if len(maker.nextBody.Transactions) > 0 {
+				blk := blockchain.Block{
+					*maker.nextHeader,
+					*maker.nextBody,
+				}
+				str := blk.ToString()
+				err := maker.txDB.Store(blk.Root[:], []byte(str))
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("Generate Block:", maker.nextHeader.Height, "\nroot:", maker.nextHeader.Root)
+				maker.chain.CurrentHeader = &blk.Header
+				maker.NewBlock()
+				fmt.Println("The Next Block:", maker.nextHeader.Root)
+			}
 			return
 		}
-		//if <-maker.interupt {
-		//	return
-		//}
 	}
 
 }
